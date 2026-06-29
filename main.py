@@ -122,6 +122,13 @@ class Plugin:
             return inputs
         return self.store.cached_inputs(host)
 
+    async def discover_tvs(self, brand: str):
+        """Auto-discover TVs on the LAN for `brand`; [] if the brand can't or it fails."""
+        try:
+            return await select_driver(REGISTRY, brand).discover()
+        except Exception:  # noqa: BLE001 - discovery is best-effort; the UI still allows manual entry
+            return []
+
     async def pair_tv(self, host: str, name: str, brand: str):
         creds = await select_driver(REGISTRY, brand).pair(host)
         label = name or host

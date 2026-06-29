@@ -14,7 +14,7 @@ Decky loads the plugin from its root, so the files it requires there stay at the
 
 ```bash
 make venv-dev    # one-time: create .venv and install pytest (from requirements-dev.txt)
-make test        # unit tests: PYTHONPATH=backend pytest backend/tv_core/tests .github/scripts/tests -q
+make test        # unit tests: PYTHONPATH=backend pytest backend/tv_core/tests backend/tv_driver_lg/tests .github/scripts/tests -q
 make build       # frontend only -> dist/index.js (rollup)
 make deploy      # build + rsync into "~/homebrew/plugins/Smart TV Controls" on this machine
 make release     # build the distributable smart-tv-controls.zip
@@ -35,11 +35,11 @@ There is no Python linter config and no JS test suite; `make test` covers the co
 Dependencies point one way: `tv_driver_lg → tv_core`, and `main.py → both`. **The core never imports a concrete driver.** `main.py` is the composition root — it builds the driver registry (`REGISTRY = build_registry([LgDriver()])`) and is the only place that names a brand.
 
 - `backend/tv_core/` — brand-agnostic core.
-  - `driver.py` — the `TvDriver` contract (`pair`, `list_inputs`, `set_input`, `reachable`) plus the registry (`build_registry`/`list_brands`/`select_driver`).
+  - `driver.py` — the `TvDriver` contract (`pair`, `list_inputs`, `set_input`, `reachable`, plus optional `discover`) plus the registry (`build_registry`/`list_brands`/`select_driver`).
   - `store.py` — JSON-persisted state: paired TVs (`{host, name, brand, creds, mac?, inputs?}`), per-screen `rules`, and the last-selected TV. `creds` is whatever opaque JSON the driver's `pair` returned — the core never inspects it. `set_inputs` also repoints any rule whose cached input no longer exists.
   - `edid.py` — `connected_displays()` reads `/sys/class/drm`; each display's `id` is its EDID monitor name (falling back to a vendor+product code). Rules key off this EDID identity, so a rule follows the **physical TV**, not an HDMI port.
   - `wol.py` — Wake-on-LAN. MAC is learned from `/proc/net/arp` while the TV is awake (at pairing or any reachable moment) and backfilled into the store, so the TV can later be woken from standby.
-- `backend/tv_driver_lg/` — the LG driver. `__init__.py` is the thin `TvDriver` subclass; `webos.py` is the LG SSAP-over-WebSocket client. All LG-specific code stays here.
+- `backend/tv_driver_lg/` — the LG driver. `__init__.py` is the thin `TvDriver` subclass; `webos.py` is the LG SSAP-over-WebSocket client (it imports the vendored `websockets` lazily, inside `_open`, so the package stays importable under tests without it); `discover.py` is SSDP (UPnP M-SEARCH) LAN discovery — chosen over mDNS because every webOS TV claims the same `lgwebostv.local` hostname, while SSDP has each TV reply from its own IP. All LG-specific code stays here.
 - `src/` — React UI. Generic: brand is just a dropdown populated from `list_brands`. `index.tsx` is the panel root; `api.ts` declares every backend RPC.
 - `py_modules/websockets/` — the pure-Python `websockets` dependency, **vendored** (gitignored; produced by `scripts/vendor_python.sh`, pinned version inside that script). `main.py` adds `py_modules/` and `backend/` to `sys.path` at import time.
 
@@ -55,7 +55,7 @@ A 5s poll diffs `connected_displays()` against the last seen set. Application is
 
 ## Adding a new brand
 
-1. Create `backend/tv_driver_<brand>/` with a `TvDriver` subclass implementing `pair`, `list_inputs`, `set_input`, `reachable`, plus a unique `name` (stable id stored on each TV) and `label` (UI text).
+1. Create `backend/tv_driver_<brand>/` with a `TvDriver` subclass implementing `pair`, `list_inputs`, `set_input`, `reachable` (and optionally `discover` for LAN auto-discovery), plus a unique `name` (stable id stored on each TV) and `label` (UI text).
 2. Inject it in `main.py`: `build_registry([LgDriver(), <Brand>Driver()])`.
 
 Nothing in `tv_core` or `src/` changes — the brand appears in the UI dropdown automatically.
