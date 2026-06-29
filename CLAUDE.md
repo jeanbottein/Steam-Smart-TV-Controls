@@ -44,12 +44,13 @@ Dependencies point one way: `tv_driver_lg → tv_core`, and `main.py → both`. 
 
 ### The auto-switch loop (`Plugin._watch` in `main.py`)
 
-A 5s poll diffs `connected_displays()` against the last seen set; a rule fires only when its display **newly appears**. The tuned constants at the top of `main.py` exist for real hardware hazards — read their comments before changing them:
+A 5s poll diffs `connected_displays()` against the last seen set. Application is **level-driven, not edge-driven**: a newly-appeared display *queues* its rule (`_enqueue` → `self.pending`), and every subsequent poll re-attempts queued rules (`_drain` → `_attempt`) until the switch actually lands or a budget expires. This is deliberate — firing once on the appearance lost the switch whenever the network/TV wasn't ready in that one window, which is exactly the case on cold boot (Wi-Fi not up yet) and often on resume. A successful switch stamps `last_success[display_id]`; one attempt per display runs at a time (`self.inflight`). The tuned constants at the top of `main.py` exist for real hardware hazards — read their comments before changing them:
 
-- `SETTLE_SECONDS` — wait out gamescope's own dock-time display reconfig before perturbing the HDMI link (switching too early can crash the Steam client).
-- `COOLDOWN_SECONDS` — an input switch can make the link flap and look like the display reappearing; this debounces it.
-- Suspend/resume: the process is frozen during sleep, so the docked display never appears to "leave and return." `_suspended_seconds()` compares `CLOCK_BOOTTIME` vs `CLOCK_MONOTONIC`; a jump past `RESUME_THRESHOLD` means we resumed, so `seen`/`last_trigger` are cleared to re-apply rules on wake.
-- `_wake` Wake-on-LANs an unreachable TV (burst of magic packets) and waits up to `WAKE_TIMEOUT` for the control API; a TV with no usable MAC, or wake-over-LAN disabled, simply won't wake.
+- `SETTLE_SECONDS` — wait out gamescope's own dock-time display reconfig before perturbing the HDMI link (switching too early can crash the Steam client). Applied as the `after` delay before the first attempt.
+- `APPLY_BUDGET_SECONDS` — how long a queued rule keeps getting retried (each poll) before giving up. Covers slow Wi-Fi association on boot and slow TV wake.
+- `COOLDOWN_SECONDS` — an input switch can make the link flap and look like the display reappearing; a re-appearance within this window of the last *successful* switch is ignored (debounce).
+- Suspend/resume: the process is frozen during sleep, so the docked display never appears to "leave and return." `_suspended_seconds()` compares `CLOCK_BOOTTIME` vs `CLOCK_MONOTONIC`; a jump past `RESUME_THRESHOLD` means we resumed, so `seen`/`pending`/`last_success` are cleared to re-queue and re-apply rules on wake.
+- `_wake` Wake-on-LANs an unreachable TV (burst of magic packets) and waits up to `WAKE_TIMEOUT` for the control API; it opportunistically re-resolves the MAC from ARP if one was never learned. A TV with no resolvable MAC, or wake-over-LAN disabled, simply won't wake.
 
 ## Adding a new brand
 
