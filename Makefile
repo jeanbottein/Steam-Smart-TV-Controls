@@ -4,7 +4,6 @@ ifneq (,$(wildcard ./.env))
 endif
 
 SHELL := bash
-PLUGIN_FOLDER ?= DeckTV
 
 help: ## List tasks
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "\033[36m%-18s\033[0m %s\n",$$1,$$2}'
@@ -16,12 +15,12 @@ build: ## Build frontend
 	@pnpm run build
 
 release: ## Build the distributable zip
-	@bash build_release.sh
+	@bash scripts/build_release.sh
 
 deploy: ## Build and install onto a local Deck
-	@bash deploy.sh
+	@bash scripts/deploy.sh
 
 test: ## Run unit tests (core + release tooling)
-	@PYTHONPATH=packages python3 -m pytest packages/tv_core/tests .github/scripts/tests -q
+	@PYTHONPATH=backend python3 -m pytest backend/tv_core/tests .github/scripts/tests -q
 
 .PHONY: help vendor build release deploy test

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Standalone LG webOS pairing probe. Usage: python3 pair_test.py [HOST]
+"""Standalone LG webOS pairing probe. Usage: python3 scripts/pair_test.py [HOST]
 
 Diagnoses each step so we can see where pairing stalls:
   1. raw TCP reachability to ports 3000/3001
@@ -12,8 +12,8 @@ import os
 import socket
 import sys
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(ROOT, "packages"))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "backend"))
 sys.path.insert(0, os.path.join(ROOT, "py_modules"))
 
 from tv_driver_lg import webos

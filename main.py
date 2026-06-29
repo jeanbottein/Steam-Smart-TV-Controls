@@ -7,7 +7,7 @@ import time
 import decky
 
 ROOT = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(ROOT, "packages"))
+sys.path.insert(0, os.path.join(ROOT, "backend"))
 sys.path.insert(0, os.path.join(ROOT, "py_modules"))
 
 from tv_core.driver import build_registry, list_brands, select_driver

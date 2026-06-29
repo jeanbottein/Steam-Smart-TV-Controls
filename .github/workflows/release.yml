@@ -56,7 +56,7 @@ jobs:
 
       - name: Build release artifact
         if: steps.version.outputs.should_release == 'true'
-        run: bash build_release.sh
+        run: bash scripts/build_release.sh
 
       - name: Publish release
         if: steps.version.outputs.should_release == 'true'
