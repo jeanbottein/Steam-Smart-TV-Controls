@@ -1,4 +1,4 @@
-# DeckaTV
+# Smart TV Controls
 
 A Decky Loader plugin for the Steam Deck that pairs with network TVs, lets you
 switch their HDMI input from the Quick Access menu, and automatically switches a
@@ -19,7 +19,7 @@ brands plug in without touching the rest of the code.
 
 ```
 main.py                         composition root: builds the driver registry, wires the plugin
-packages/
+backend/                        Python source (our code)
   tv_core/                      brand-agnostic core (knows no driver)
     driver.py                   TvDriver contract + registry (build/list/select)
     edid.py                     display detection
@@ -29,7 +29,8 @@ packages/
     __init__.py                 LgDriver
     webos.py                    LG SSAP WebSocket client
 src/                            React UI (generic; brand is just a dropdown)
-py_modules/websockets/          vendored pure-Python dependency (built in CI)
+scripts/                        build, deploy, and vendor tooling
+py_modules/websockets/          vendored pure-Python dependency (gitignored; built in CI)
 ```
 
 Single repository, single release. Dependencies point one way:
@@ -40,7 +41,7 @@ port. A 5-second poll detects when a screen appears and applies its rule.
 
 ## Adding a new brand
 
-1. Create `packages/tv_driver_<brand>/` with a `TvDriver` subclass implementing
+1. Create `backend/tv_driver_<brand>/` with a `TvDriver` subclass implementing
    `pair`, `list_inputs`, `set_input`, plus a unique `name` and `label`.
 2. Inject it in `main.py`: `build_registry([LgDriver(), <Brand>Driver()])`.
 
@@ -50,8 +51,8 @@ Nothing in `tv_core` changes; the brand appears in the UI dropdown automatically
 
 1. Install Decky Loader on your Deck (Developer mode enabled — the plugin needs
    `_root` to read display info).
-2. Extract `deckatv-<version>.zip` into `~/homebrew/plugins/`.
-3. Restart Decky (or reboot). The plugin appears as "DeckaTV".
+2. Extract `smart-tv-controls-<version>.zip` into `~/homebrew/plugins/`.
+3. Restart Decky (or reboot). The plugin appears as "Smart TV Controls".
 
 ## Usage
 

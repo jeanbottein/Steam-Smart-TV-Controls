@@ -7,7 +7,7 @@ import time
 import decky
 
 ROOT = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(ROOT, "packages"))
+sys.path.insert(0, os.path.join(ROOT, "backend"))
 sys.path.insert(0, os.path.join(ROOT, "py_modules"))
 
 from tv_core.driver import build_registry, list_brands, select_driver
@@ -18,8 +18,6 @@ from tv_core.wol import is_valid_mac, resolve_mac, send_magic_packet
 from tv_driver_lg import LgDriver
 
 POLL_SECONDS = 5
-TRIGGER_ATTEMPTS = 3
-RETRY_SECONDS = 3
 LOG_TAIL_LINES = 200
 # Let gamescope finish its own dock-time display reconfiguration before we perturb
 # the HDMI link by switching inputs — doing both at once can crash the Steam client.
@@ -29,6 +27,12 @@ SETTLE_SECONDS = 5
 # like the display reappearing. Ignore a display we just acted on for this long so a
 # flapping link can't machine-gun switches.
 COOLDOWN_SECONDS = 60
+# A newly-appeared display usually isn't actionable the instant it shows up: on cold boot
+# the Deck's Wi-Fi isn't connected yet, and a TV woken from standby needs a moment before
+# its control API answers. So rather than fire once and give up (which loses the switch
+# whenever the network or TV is a beat slow — the cause of flaky dock-on-boot/resume), we
+# keep re-attempting the rule on each poll until the switch lands or this budget elapses.
+APPLY_BUDGET_SECONDS = 180
 # When a TV is asleep, Wake-on-LAN it and wait this long for the control API to boot.
 # A TV in standby answers in a few seconds; one that powered itself fully off (LG TVs
 # do this after hours with no signal) needs a whole cold boot, so the budget is wide.
@@ -53,11 +57,13 @@ REGISTRY = build_registry([LgDriver()])
 class Plugin:
     async def _main(self):
         prune_logs(decky.DECKY_PLUGIN_LOG_DIR)
-        settings_path = os.path.join(decky.DECKY_PLUGIN_SETTINGS_DIR, "deckatv.json")
+        settings_path = os.path.join(decky.DECKY_PLUGIN_SETTINGS_DIR, "smart-tv-controls.json")
         self.store = Store(settings_path)
         self.seen = set()
-        self.last_trigger = {}  # display_id -> monotonic time of the last switch
-        self.tasks = set()  # in-flight delayed switches, kept alive and cancellable
+        self.pending = {}  # display_id -> {after, deadline}: rules awaiting a successful switch
+        self.inflight = set()  # display_ids with an attempt running (one at a time per display)
+        self.last_success = {}  # display_id -> monotonic time of the last successful switch
+        self.tasks = set()  # spawned attempts, kept alive and cancellable on unload
         self.watcher = asyncio.get_event_loop().create_task(self._watch())
 
     async def _unload(self):
@@ -151,6 +157,10 @@ class Plugin:
         if await driver.reachable(tv["host"]):
             return True
         mac = tv.get("mac")
+        if not mac:  # never learned it (e.g. paired while offline) — the ARP table may be ready now
+            mac = resolve_mac(tv["host"])
+            if mac and is_valid_mac(mac):
+                self.store.set_mac(tv["host"], mac)
         if not mac or not is_valid_mac(mac):  # can't wake without a usable MAC
             return False
         deadline = time.monotonic() + WAKE_TIMEOUT
@@ -173,7 +183,8 @@ class Plugin:
                 # forget it (and any cooldown) and let this poll re-apply the rules.
                 decky.logger.info("resume detected; re-evaluating displays")
                 self.seen = set()
-                self.last_trigger.clear()
+                self.pending.clear()
+                self.last_success.clear()
             suspended = now_suspended
             last_error = await self._poll(last_error)
             await asyncio.sleep(POLL_SECONDS)
@@ -196,12 +207,13 @@ class Plugin:
             return message
 
     async def _apply_rules(self):
-        appeared = self._take_appeared()
+        # Level-driven, not edge-driven: an appearance *queues* a rule, and we keep
+        # attempting queued rules every poll until the switch actually lands. Firing once on
+        # the appearance lost the switch whenever the network or TV wasn't ready in that one
+        # window — exactly the case on cold boot, and often on resume.
         now = time.monotonic()
-        ready = [rule for rule in self.store.rules if self._ready(rule, appeared, now)]
-        for rule in ready:
-            self.last_trigger[rule["display_id"]] = now
-            self._spawn(self._trigger_later(rule))
+        self._enqueue(self._take_appeared(), now)
+        self._drain(now)
 
     def _take_appeared(self):
         present = {display["id"] for display in connected_displays()}
@@ -209,39 +221,60 @@ class Plugin:
         self.seen = present
         return appeared
 
-    def _ready(self, rule, appeared, now):
-        if not rule.get("enabled"):
-            return False
-        if rule["display_id"] not in appeared:
-            return False
-        return now - self.last_trigger.get(rule["display_id"], 0.0) >= COOLDOWN_SECONDS
+    def _enqueue(self, appeared, now):
+        """Queue a rule (for repeated attempts) when its display newly appears."""
+        for rule in self.store.rules:
+            did = rule["display_id"]
+            if not rule.get("enabled") or did not in appeared:
+                continue
+            # Debounce the link flap a switch itself can cause: ignore a re-appearance that
+            # lands within COOLDOWN_SECONDS of this display's last *successful* switch.
+            if now - self.last_success.get(did, -COOLDOWN_SECONDS) < COOLDOWN_SECONDS:
+                continue
+            self.pending[did] = {"after": now + SETTLE_SECONDS, "deadline": now + APPLY_BUDGET_SECONDS}
+
+    def _drain(self, now):
+        """Attempt each queued rule once per poll until it succeeds or its budget expires."""
+        for rule in self.store.rules:
+            did = rule["display_id"]
+            slot = self.pending.get(did)
+            if slot is None or did in self.inflight:
+                continue
+            if not rule.get("enabled"):  # disabled mid-budget — drop it from the queue
+                self.pending.pop(did, None)
+            elif now >= slot["deadline"]:
+                self.pending.pop(did, None)
+                decky.logger.info(f"auto-switch: gave up on {did} (not switchable within {APPLY_BUDGET_SECONDS}s)")
+            elif did in self.seen and now >= slot["after"]:
+                # Only switch while the display is actually connected, and only past the
+                # gamescope settle delay. If it was undocked during settle we skip and let the
+                # budget expire; a brief flap just defers the attempt to a later poll.
+                self.inflight.add(did)
+                self._spawn(self._attempt(rule, did))
 
     def _spawn(self, coro):
         task = asyncio.get_event_loop().create_task(coro)
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
 
-    async def _trigger_later(self, rule):
-        # Wait out gamescope's own dock-time display setup before touching the HDMI link.
-        await asyncio.sleep(SETTLE_SECONDS)
-        await self._trigger(rule)
-
-    async def _trigger(self, rule):
-        tv = self.store.find_tv(rule["host"])
-        if tv is None:
-            return
-        # Wake once, with the full budget. If it never comes up there's no point hammering
-        # the input switch, so bail with a clear reason rather than three doomed attempts.
-        if not await self._wake(tv):
-            decky.logger.info(f"auto-switch: {tv['name']} never woke (check wake-over-LAN)")
-            return
-        driver = select_driver(REGISTRY, tv["brand"])
-        for attempt in range(TRIGGER_ATTEMPTS):
-            try:
-                await driver.set_input(tv["host"], tv["creds"], rule["input_id"])
-                decky.logger.info(f"auto-switch: {tv['name']} -> {rule['input_id']}")
-                await decky.emit("auto_switch", tv["name"], rule["input_id"])
+    async def _attempt(self, rule, did):
+        """One switch attempt. On success the rule leaves the queue; on any failure it stays
+        queued and the next poll retries (within the budget), so a TV or network that becomes
+        ready a moment later still gets switched."""
+        try:
+            tv = self.store.find_tv(rule["host"])
+            if tv is None:
+                self.pending.pop(did, None)
                 return
-            except Exception as error:  # noqa: BLE001 - SSAP may not be ready right after boot
-                decky.logger.info(f"auto-switch attempt {attempt + 1} failed: {error}")
-                await asyncio.sleep(RETRY_SECONDS)
+            if not await self._wake(tv):
+                return  # asleep/unreachable right now — leave it queued for the next poll
+            driver = select_driver(REGISTRY, tv["brand"])
+            await driver.set_input(tv["host"], tv["creds"], rule["input_id"])
+            self.last_success[did] = time.monotonic()
+            self.pending.pop(did, None)
+            decky.logger.info(f"auto-switch: {tv['name']} -> {rule['input_id']}")
+            await decky.emit("auto_switch", tv["name"], rule["input_id"])
+        except Exception as error:  # noqa: BLE001 - SSAP may not be ready just after boot; retry next poll
+            decky.logger.info(f"auto-switch attempt for {did} failed: {error}")
+        finally:
+            self.inflight.discard(did)

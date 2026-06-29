@@ -2,7 +2,7 @@
 # Vendor pure-Python runtime dependencies into py_modules/ (arch-independent).
 set -euo pipefail
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 WEBSOCKETS_VERSION="14.2"
 TARGET="py_modules"
