@@ -1,0 +1,11 @@
+{
+  "name": "DeckaTV",
+  "author": "Jean",
+  "flags": ["_root"],
+  "api_version": 1,
+  "publish": {
+    "tags": ["tv", "hdmi", "dock", "lg", "webos"],
+    "description": "Pair and control network TVs, and auto-switch HDMI input when the Deck is docked to a specific screen. LG webOS supported; pluggable driver layer for more brands.",
+    "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/PluginLoader"
+  }
+}

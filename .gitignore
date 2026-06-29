@@ -1,0 +1,9 @@
+node_modules/
+dist/
+py_modules/
+__pycache__/
+.pytest_cache/
+*.map
+*.zip
+.env
+.DS_Store
