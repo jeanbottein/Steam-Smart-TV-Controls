@@ -5,11 +5,17 @@ endif
 
 SHELL := bash
 
+# Prefer the project venv (created by `make venv-dev`); fall back to system python3.
+PYTHON := $(shell [ -x .venv/bin/python ] && echo .venv/bin/python || echo python3)
+
 help: ## List tasks
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "\033[36m%-18s\033[0m %s\n",$$1,$$2}'
 
 vendor: ## Install dependencies
 	@pnpm install
+
+venv-dev: ## Create .venv and install Python dev tools (pytest)
+	@python3 -m venv .venv && .venv/bin/pip install -q -r requirements-dev.txt
 
 build: ## Build frontend
 	@pnpm run build
@@ -20,7 +26,7 @@ release: ## Build the distributable zip
 deploy: ## Build and install onto a local Deck
 	@bash scripts/deploy.sh
 
-test: ## Run unit tests (core + release tooling)
-	@PYTHONPATH=backend python3 -m pytest backend/tv_core/tests .github/scripts/tests -q
+test: ## Run unit tests (core + release tooling); run `make venv-dev` first
+	@PYTHONPATH=backend $(PYTHON) -m pytest backend/tv_core/tests .github/scripts/tests -q
 
-.PHONY: help vendor build release deploy test
+.PHONY: help vendor venv-dev build release deploy test
