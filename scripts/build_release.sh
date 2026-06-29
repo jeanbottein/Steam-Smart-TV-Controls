@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Build the frontend and package the plugin into <name>-<version>.zip.
+# Build the frontend and package the plugin into <slug>.zip.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 PLUGIN_NAME="Smart TV Controls"
-VERSION="$(jq -r .version package.json)"
-ZIP_NAME="$(echo "$PLUGIN_NAME" | tr '[:upper:] ' '[:lower:]-')-${VERSION}.zip"
+SLUG="$(echo "$PLUGIN_NAME" | tr '[:upper:] ' '[:lower:]-')"
+# Stable name (no version) so /releases/latest/download/<slug>.zip is a permanent URL.
+# The release version is carried by the git tag / release title, not the filename.
+ZIP_NAME="${SLUG}.zip"
 
 command -v pnpm >/dev/null || { echo "pnpm is required"; exit 1; }
 

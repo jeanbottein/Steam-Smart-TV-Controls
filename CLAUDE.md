@@ -17,7 +17,7 @@ make venv-dev    # one-time: create .venv and install pytest (from requirements-
 make test        # unit tests: PYTHONPATH=backend pytest backend/tv_core/tests .github/scripts/tests -q
 make build       # frontend only -> dist/index.js (rollup)
 make deploy      # build + rsync into "~/homebrew/plugins/Smart TV Controls" on this machine
-make release     # build the distributable smart-tv-controls-<version>.zip
+make release     # build the distributable smart-tv-controls.zip
 pnpm run watch   # rebuild the frontend on change
 
 # run a single test
