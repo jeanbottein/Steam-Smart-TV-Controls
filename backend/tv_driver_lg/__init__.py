@@ -2,12 +2,15 @@
 
 from tv_core.driver import TvDriver
 
-from . import webos
+from . import discover, webos
 
 
 class LgDriver(TvDriver):
     name = "lg"
     label = "LG (webOS)"
+
+    async def discover(self):
+        return await discover.discover()
 
     async def pair(self, host):
         return await webos.pair(host)

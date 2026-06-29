@@ -4,8 +4,6 @@ import asyncio
 import json
 import ssl
 
-from websockets.asyncio.client import connect
-
 CONNECT_TIMEOUT = 6
 PAIR_TIMEOUT = 60
 REQUEST_TIMEOUT = 10
@@ -50,6 +48,10 @@ class WebOSClient:
             await self._socket.close()
 
     async def _open(self):
+        # Imported lazily so the package is importable (e.g. under unit tests) without the
+        # vendored `websockets`, which only `main.py` puts on sys.path at runtime.
+        from websockets.asyncio.client import connect
+
         endpoints = [
             (f"wss://{self._host}:3001", _insecure_ssl()),
             (f"ws://{self._host}:3000", None),

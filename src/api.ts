@@ -28,6 +28,11 @@ export interface Input {
   label: string;
 }
 
+export interface DiscoveredTv {
+  host: string;
+  name: string;
+}
+
 export const listBrands = callable<[], Brand[]>("list_brands");
 export const listTvs = callable<[], Tv[]>("list_tvs");
 export const getSelectedTv = callable<[], string>("get_selected_tv");
@@ -35,6 +40,7 @@ export const setSelectedTv = callable<[host: string], void>("set_selected_tv");
 export const listRules = callable<[], Rule[]>("list_rules");
 export const listDisplays = callable<[], Display[]>("list_displays");
 export const getInputs = callable<[host: string], Input[]>("get_inputs");
+export const discoverTvs = callable<[brand: string], DiscoveredTv[]>("discover_tvs");
 export const pairTv = callable<[host: string, name: string, brand: string], Tv>("pair_tv");
 export const removeTv = callable<[host: string], void>("remove_tv");
 export const switchInput = callable<[host: string, inputId: string], void>("switch_input");

@@ -27,6 +27,6 @@ deploy: ## Build and install onto a local Deck
 	@bash scripts/deploy.sh
 
 test: ## Run unit tests (core + release tooling); run `make venv-dev` first
-	@PYTHONPATH=backend $(PYTHON) -m pytest backend/tv_core/tests .github/scripts/tests -q
+	@PYTHONPATH=backend $(PYTHON) -m pytest backend/tv_core/tests backend/tv_driver_lg/tests .github/scripts/tests -q
 
 .PHONY: help vendor venv-dev build release deploy test

@@ -25,6 +25,14 @@ class TvDriver:
         """Return True if the TV at `host` answers on the network."""
         return False
 
+    async def discover(self):
+        """Return [{host, name}] of TVs found on the LAN for this brand.
+
+        Optional: brands that can't (or don't yet) auto-discover return []. The
+        core never knows *how* a driver finds TVs — only that it may return some.
+        """
+        return []
+
 
 def build_registry(drivers):
     return {driver.name: driver for driver in drivers}
