@@ -1,8 +1,9 @@
 # Smart TV Controls
 
-A Decky Loader plugin for the Steam Deck that pairs with network TVs, lets you
-switch their HDMI input from the Quick Access menu, and automatically switches a
-TV to a chosen input when the Deck is docked to that specific screen.
+A Decky Loader plugin for SteamOS that pairs with network TVs, switches their
+HDMI input from the Quick Access menu, and automatically wakes a TV and switches
+it to the right input when SteamOS connects to that screen — like HDMI-CEC, but
+over the network.
 
 The core is brand-agnostic. **LG (webOS)** ships as the first driver; other
 brands plug in without touching the rest of the code.
@@ -11,9 +12,10 @@ brands plug in without touching the rest of the code.
 
 - Pair one or more TVs (pick the brand, enter the IP).
 - Manually switch any paired TV's input.
-- Per-screen auto-switch rules: each connected display maps to a TV + input,
-  applied the moment that screen appears (e.g. docking to the living-room TV
-  jumps it to the Deck's HDMI port).
+- Per-screen auto-switch rules: each connected display maps to a TV + input.
+  When that screen appears — at boot, on resume, or when the TV reconnects — the
+  TV is woken over the network (Wake-on-LAN) and switched to the chosen input
+  automatically.
 
 ## Architecture
 
@@ -49,10 +51,27 @@ Nothing in `tv_core` changes; the brand appears in the UI dropdown automatically
 
 ## Install (prebuilt)
 
-1. Install Decky Loader on your Deck (Developer mode enabled — the plugin needs
-   `_root` to read display info).
-2. Extract `smart-tv-controls-<version>.zip` into `~/homebrew/plugins/`.
-3. Restart Decky (or reboot). The plugin appears as "Smart TV Controls".
+Requires Decky Loader with **Developer mode** enabled — the plugin needs `_root`
+to read display info.
+
+### From URL (recommended)
+
+1. In Decky, go to **Settings → Developer mode** and choose **Install Plugin
+   from URL**.
+2. Paste this URL — it always points to the latest release:
+
+   ```
+   https://github.com/jeanbottein/Smart-TV-Controls/releases/latest/download/smart-tv-controls.zip
+   ```
+
+   (This is the release **zip** URL, not the repository URL.)
+3. **Restart Decky** (or reboot) — plugins installed from a URL only appear after
+   a restart. It shows up as "Smart TV Controls".
+
+### Manual
+
+Download the release `.zip` from the [Releases](https://github.com/jeanbottein/Smart-TV-Controls/releases/latest)
+page, extract it into `~/homebrew/plugins/`, and restart Decky.
 
 ## Usage
 
