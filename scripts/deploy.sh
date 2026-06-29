@@ -4,7 +4,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-PLUGIN_NAME="DeckaTV"
+PLUGIN_NAME="Smart TV Controls"
 DEST="$HOME/homebrew/plugins/${PLUGIN_NAME}"
 
 command -v pnpm >/dev/null || { echo "pnpm is required"; exit 1; }

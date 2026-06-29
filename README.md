@@ -1,4 +1,4 @@
-# DeckaTV
+# Smart TV Controls
 
 A Decky Loader plugin for the Steam Deck that pairs with network TVs, lets you
 switch their HDMI input from the Quick Access menu, and automatically switches a
@@ -51,8 +51,8 @@ Nothing in `tv_core` changes; the brand appears in the UI dropdown automatically
 
 1. Install Decky Loader on your Deck (Developer mode enabled — the plugin needs
    `_root` to read display info).
-2. Extract `deckatv-<version>.zip` into `~/homebrew/plugins/`.
-3. Restart Decky (or reboot). The plugin appears as "DeckaTV".
+2. Extract `smart-tv-controls-<version>.zip` into `~/homebrew/plugins/`.
+3. Restart Decky (or reboot). The plugin appears as "Smart TV Controls".
 
 ## Usage
 

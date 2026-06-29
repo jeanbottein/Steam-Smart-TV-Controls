@@ -168,8 +168,8 @@ export default definePlugin(() => {
   );
 
   return {
-    name: "DeckaTV",
-    titleView: <div className={staticClasses.Title}>DeckaTV</div>,
+    name: "Smart TV Controls",
+    titleView: <div className={staticClasses.Title}>Smart TV Controls</div>,
     content: <Content />,
     icon: <FaTv />,
     onDismount() {

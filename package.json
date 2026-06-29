@@ -1,5 +1,5 @@
 {
-  "name": "deckatv",
+  "name": "smart-tv-controls",
   "version": "1.0.0",
   "description": "Pair and control network TVs from the Steam Deck, with auto HDMI input switching on dock. Pluggable per-brand drivers.",
   "type": "module",

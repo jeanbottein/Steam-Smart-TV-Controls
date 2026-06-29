@@ -4,9 +4,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-PLUGIN_NAME="DeckaTV"
+PLUGIN_NAME="Smart TV Controls"
 VERSION="$(jq -r .version package.json)"
-ZIP_NAME="$(echo "$PLUGIN_NAME" | tr '[:upper:]' '[:lower:]')-${VERSION}.zip"
+ZIP_NAME="$(echo "$PLUGIN_NAME" | tr '[:upper:] ' '[:lower:]-')-${VERSION}.zip"
 
 command -v pnpm >/dev/null || { echo "pnpm is required"; exit 1; }
 

@@ -5,7 +5,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-PLUGIN_NAME="DeckaTV"
+PLUGIN_NAME="Smart TV Controls"
 DECK_USER="${DECK_USER:-deck}"
 DECK_HOST="${DECK_HOST:-steamdeck.lan}"
 DEST="/home/${DECK_USER}/homebrew/plugins/${PLUGIN_NAME}"
