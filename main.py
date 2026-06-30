@@ -57,7 +57,7 @@ REGISTRY = build_registry([LgDriver()])
 class Plugin:
     async def _main(self):
         prune_logs(decky.DECKY_PLUGIN_LOG_DIR)
-        settings_path = os.path.join(decky.DECKY_PLUGIN_SETTINGS_DIR, "smart-tv-controls.json")
+        settings_path = os.path.join(decky.DECKY_PLUGIN_SETTINGS_DIR, "deckatv.json")
         self.store = Store(settings_path)
         self.seen = set()
         self.pending = {}  # display_id -> {after, deadline}: rules awaiting a successful switch

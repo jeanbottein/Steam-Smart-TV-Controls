@@ -218,15 +218,15 @@ export default definePlugin(() => {
   try {
     focusReg = steamClient?.System?.UI?.RegisterForFocusChangeEvents?.(onFocusChange);
   } catch (error) {
-    console.error("[smart-tv-controls] focus hook setup failed", error);
+    console.error("[deckatv] focus hook setup failed", error);
   }
 
   return {
     // Identity must match plugin.json's name (Decky keys the install/settings/log dirs off
     // it) — kept space-free so the plugin folder has no spaces. The panel title below is the
     // separate, human-readable display string.
-    name: "Smart-TV-Controls",
-    titleView: <div className={staticClasses.Title}>Smart TV Controls</div>,
+    name: "DeckaTV",
+    titleView: <div className={staticClasses.Title}>DeckaTV</div>,
     content: <Content />,
     icon: <FaTv />,
     onDismount() {

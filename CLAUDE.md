@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Smart TV Controls is a [Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader) plugin for the Steam Deck. It pairs with network TVs, switches their HDMI input from the Quick Access menu, and auto-switches a TV to a chosen input when the Deck is docked to that specific physical screen. A Python backend (`main.py` + `backend/`) talks to TVs and the OS; a React frontend (`src/`) is the Quick Access panel. The two communicate over Decky's `callable` RPC bridge (see `src/api.ts` ↔ the `async def` methods on `Plugin` in `main.py`).
+DeckaTV is a [Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader) plugin for the Steam Deck. It pairs with network TVs, switches their HDMI input from the Quick Access menu, and auto-switches a TV to a chosen input when the Deck is docked to that specific physical screen. A Python backend (`main.py` + `backend/`) talks to TVs and the OS; a React frontend (`src/`) is the Quick Access panel. The two communicate over Decky's `callable` RPC bridge (see `src/api.ts` ↔ the `async def` methods on `Plugin` in `main.py`).
 
 ### Layout
 
@@ -16,8 +16,8 @@ Decky loads the plugin from its root, so the files it requires there stay at the
 make venv-dev    # one-time: create .venv and install pytest (from requirements-dev.txt)
 make test        # unit tests: PYTHONPATH=backend pytest backend/tv_core/tests backend/tv_driver_lg/tests .github/scripts/tests -q
 make build       # frontend only -> dist/index.js (rollup)
-make deploy      # build + rsync into ~/homebrew/plugins/Smart-TV-Controls on this machine
-make release     # build the distributable smart-tv-controls.zip
+make deploy      # build + rsync into ~/homebrew/plugins/DeckaTV on this machine
+make release     # build the distributable deckatv.zip
 pnpm run watch   # rebuild the frontend on change
 
 # run a single test
