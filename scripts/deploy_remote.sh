@@ -5,7 +5,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-PLUGIN_NAME="Smart-TV-Controls"
+PLUGIN_NAME="DeckaTV"
 DECK_USER="${DECK_USER:-deck}"
 DECK_HOST="${DECK_HOST:-steamdeck.lan}"
 DEST="/home/${DECK_USER}/homebrew/plugins/${PLUGIN_NAME}"
@@ -40,10 +40,8 @@ find "$STAGING/backend" -type d -name tests -prune -exec rm -rf {} +
 find "$STAGING" -type d -name __pycache__ -prune -exec rm -rf {} +
 
 # Multiplex one SSH connection so the password is typed once: the first ssh
-# opens a master connection (and creates the dest dir, properly quoted so the
-# spaces in the plugin name survive), then rsync reuses it without re-prompting.
-# Note: --rsync-path can't carry the mkdir here — rsync word-splits that string,
-# which breaks the quoting around a path containing spaces.
+# opens a master connection (and creates the dest dir), then rsync reuses it
+# without re-prompting.
 echo "Syncing to ${DECK_USER}@${DECK_HOST}:${DEST} (enter the Deck password when prompted)..."
 SSH_CTRL="$(mktemp -u)"
 trap 'ssh -o ControlPath="$SSH_CTRL" -O exit "${DECK_USER}@${DECK_HOST}" 2>/dev/null || true' EXIT

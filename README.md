@@ -1,4 +1,4 @@
-# Smart TV Controls
+# DeckaTV
 
 A Decky Loader plugin for SteamOS that pairs with network TVs, switches their
 HDMI input from the Quick Access menu, and automatically wakes a TV and switches
@@ -61,17 +61,16 @@ to read display info.
 2. Paste this URL — it always points to the latest release:
 
    ```
-   https://github.com/jeanbottein/Smart-TV-Controls/releases/latest/download/smart-tv-controls.zip
+   https://github.com/jeanbottein/DeckaTV/releases/latest/download/deckatv.zip
    ```
 
    (This is the release **zip** URL, not the repository URL.)
 3. **Restart Decky** (or reboot) — plugins installed from a URL only appear after
-   a restart. It shows up as "Smart-TV-Controls" in the plugin list (the Quick
-   Access panel titles it "Smart TV Controls").
+   a restart. It shows up as "DeckaTV" in the plugin list.
 
 ### Manual
 
-Download the release `.zip` from the [Releases](https://github.com/jeanbottein/Smart-TV-Controls/releases/latest)
+Download the release `.zip` from the [Releases](https://github.com/jeanbottein/DeckaTV/releases/latest)
 page, extract it into `~/homebrew/plugins/`, and restart Decky.
 
 ## Usage

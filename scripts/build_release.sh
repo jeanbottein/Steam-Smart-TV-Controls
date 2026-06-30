@@ -4,7 +4,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-PLUGIN_NAME="Smart-TV-Controls"
+PLUGIN_NAME="DeckaTV"
 SLUG="$(echo "$PLUGIN_NAME" | tr '[:upper:] ' '[:lower:]-')"
 # Stable name (no version) so /releases/latest/download/<slug>.zip is a permanent URL.
 # The release version is carried by the git tag / release title, not the filename.
