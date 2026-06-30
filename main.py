@@ -141,6 +141,28 @@ class Plugin:
     async def switch_input(self, host: str, input_id: str):
         await self._set_input(self.store.find_tv(host), input_id)
 
+    async def reapply_rules(self):
+        """Re-assert the input rule for every currently-connected display — the equivalent
+        of a console's "One Touch Play" when you press the controller's home button.
+
+        Unlike the watch loop this ignores the appearance gate and the post-switch cooldown
+        (the press is an explicit intent) and skips the gamescope settle delay, since no
+        dock-time display reconfig is in flight. The driver no-ops when the TV is already on
+        the target input, so pressing repeatedly is cheap. Reuses the same drain/attempt
+        path, so retries, wake, and the one-attempt-per-display guard all still apply."""
+        now = time.monotonic()
+        present = {display["id"] for display in connected_displays()}
+        queued = [
+            rule["display_id"]
+            for rule in self.store.rules
+            if rule.get("enabled") and rule["display_id"] in present
+        ]
+        for did in queued:
+            self.pending[did] = {"after": now, "deadline": now + APPLY_BUDGET_SECONDS}
+        if queued:
+            decky.logger.info(f"reapply requested for {queued}")
+            self._drain(now)
+
     async def set_rule(self, display_id: str, host: str, input_id: str, enabled: bool):
         self.store.set_rule(display_id, host, input_id, enabled)
 
