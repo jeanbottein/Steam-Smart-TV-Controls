@@ -1,4 +1,4 @@
-import { ButtonItem, ConfirmModal, PanelSection, PanelSectionRow, showModal } from "@decky/ui";
+import { ButtonItem, ConfirmModal, PanelSectionRow, showModal } from "@decky/ui";
 import { removeTv, tvLabel, type Tv } from "../api";
 
 interface TvManageProps {
@@ -28,12 +28,10 @@ export function TvManage({ tvs, selectedHost, onChanged }: TvManageProps) {
   };
 
   return (
-    <PanelSection>
-      <PanelSectionRow>
-        <ButtonItem layout="below" bottomSeparator="none" onClick={confirmRemove}>
-          <span style={{ color: "#e74c3c" }}>Remove this TV</span>
-        </ButtonItem>
-      </PanelSectionRow>
-    </PanelSection>
+    <PanelSectionRow>
+      <ButtonItem layout="below" bottomSeparator="none" onClick={confirmRemove}>
+        <span style={{ color: "#e74c3c" }}>Remove this TV</span>
+      </ButtonItem>
+    </PanelSectionRow>
   );
 }
