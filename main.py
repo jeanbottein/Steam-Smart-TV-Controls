@@ -145,20 +145,31 @@ class Plugin:
         """Re-assert the input rule for every currently-connected display — the equivalent
         of a console's "One Touch Play" when you press the controller's home button.
 
-        Unlike the watch loop this ignores the appearance gate and the post-switch cooldown
-        (the press is an explicit intent) and skips the gamescope settle delay, since no
-        dock-time display reconfig is in flight. The driver no-ops when the TV is already on
-        the target input, so pressing repeatedly is cheap. Reuses the same drain/attempt
-        path, so retries, wake, and the one-attempt-per-display guard all still apply."""
+        Unlike the watch loop this ignores the appearance gate and the post-switch cooldown,
+        since the press is explicit intent. It still honors the gamescope settle delay for a
+        display we haven't seen yet (a dock-time reconfig may be in flight, and switching
+        mid-reconfig can crash the Steam client) and never pulls an already-queued attempt
+        earlier than the watch loop scheduled it; a steady, already-seen display switches
+        right away. The driver no-ops when the TV is already on the target input, so pressing
+        repeatedly is cheap. Reuses the drain/attempt path, so retries, wake, and the
+        one-attempt-per-display guard all still apply."""
         now = time.monotonic()
         present = {display["id"] for display in connected_displays()}
-        queued = [
-            rule["display_id"]
-            for rule in self.store.rules
-            if rule.get("enabled") and rule["display_id"] in present
-        ]
-        for did in queued:
-            self.pending[did] = {"after": now, "deadline": now + APPLY_BUDGET_SECONDS}
+        # A display we haven't seen yet may still be mid dock-reconfig, so give it the settle
+        # delay. Fold present into `seen` so _drain — which only acts on seen displays — fires.
+        appeared = present - self.seen
+        self.seen |= present
+        queued = []
+        for rule in self.store.rules:
+            did = rule["display_id"]
+            if not rule.get("enabled") or did not in present:
+                continue
+            after = now + SETTLE_SECONDS if did in appeared else now
+            existing = self.pending.get(did)
+            if existing is not None:
+                after = max(after, existing["after"])
+            self.pending[did] = {"after": after, "deadline": now + APPLY_BUDGET_SECONDS}
+            queued.append(did)
         if queued:
             decky.logger.info(f"reapply requested for {queued}")
             self._drain(now)
