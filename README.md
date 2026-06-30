@@ -61,7 +61,7 @@ to read display info.
 2. Paste this URL — it always points to the latest release:
 
    ```
-   https://github.com/jeanbottein/Smart-TV-Controls/releases/latest/download/smart-tv-controls.zip
+   https://github.com/jeanbottein/Steam-Smart-TV-Controls/releases/latest/download/smart-tv-controls.zip
    ```
 
    (This is the release **zip** URL, not the repository URL.)
@@ -71,7 +71,7 @@ to read display info.
 
 ### Manual
 
-Download the release `.zip` from the [Releases](https://github.com/jeanbottein/Smart-TV-Controls/releases/latest)
+Download the release `.zip` from the [Releases](https://github.com/jeanbottein/Steam-Smart-TV-Controls/releases/latest)
 page, extract it into `~/homebrew/plugins/`, and restart Decky.
 
 ## Usage
