@@ -196,20 +196,36 @@ export default definePlugin(() => {
   // debounce just keeps focus churn from stacking calls. Registered here (not in the panel,
   // which only exists while the QAM is open) so it lives for the whole session.
   const steamClient = (window as unknown as { SteamClient?: any }).SteamClient;
+  // Fully guarded: a stale backend missing reapply_rules must NEVER break plugin load. A
+  // callable can surface "unknown method" synchronously, so wrap the call itself — not just
+  // the returned promise — or the throw escapes definePlugin and the whole plugin fails to
+  // import (Error: unknown method … in PluginLoader.importReactPlugin).
+  const safe = (run: () => Promise<unknown> | undefined) => {
+    try {
+      void run()?.catch(() => {});
+    } catch {
+      /* stale/mismatched backend — ignore */
+    }
+  };
   let lastReapply = 0;
-  const onFocusChange = (event?: unknown) => {
-    console.debug("[smart-tv-controls] focus change", event);
+  const onFocusChange = () => {
     const now = Date.now();
     if (now - lastReapply < 3000) return;
     lastReapply = now;
-    void reapplyRules().catch(() => {
-      /* best-effort: a failed reassert is retried by the normal poll loop */
-    });
+    safe(() => reapplyRules());
   };
-  const focusReg = steamClient?.System?.UI?.RegisterForFocusChangeEvents?.(onFocusChange);
+  let focusReg: { unregister?: () => void } | undefined;
+  try {
+    focusReg = steamClient?.System?.UI?.RegisterForFocusChangeEvents?.(onFocusChange);
+  } catch (error) {
+    console.error("[smart-tv-controls] focus hook setup failed", error);
+  }
 
   return {
-    name: "Smart TV Controls",
+    // Identity must match plugin.json's name (Decky keys the install/settings/log dirs off
+    // it) — kept space-free so the plugin folder has no spaces. The panel title below is the
+    // separate, human-readable display string.
+    name: "Smart-TV-Controls",
     titleView: <div className={staticClasses.Title}>Smart TV Controls</div>,
     content: <Content />,
     icon: <FaTv />,

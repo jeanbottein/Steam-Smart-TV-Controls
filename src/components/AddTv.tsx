@@ -181,12 +181,13 @@ export function AddTv({ brands, onPaired }: { brands: Brand[]; onPaired: (host: 
         <DialogButton
           disabled={!canPair}
           onClick={pair}
-          // Green while it's an actionable (or in-progress) Pair; default grey when there's
-          // nothing to pair yet, so the disabled state still reads as a real button.
+          // Green while it's an actionable (or in-progress) Pair; an explicit grey when
+          // there's nothing to pair yet — DialogButton renders no background in its disabled
+          // state, which left just the floating word "Pair", so force a visible button.
           style={
             host && brand
               ? { width: "100%", backgroundColor: "#4caf50", color: "#0e141b" }
-              : { width: "100%" }
+              : { width: "100%", backgroundColor: "#3d4450", color: "#9aa0a6" }
           }
         >
           {busy ? "Accept the prompt on your TV…" : "Pair"}

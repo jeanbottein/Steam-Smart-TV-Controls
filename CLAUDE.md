@@ -16,7 +16,7 @@ Decky loads the plugin from its root, so the files it requires there stay at the
 make venv-dev    # one-time: create .venv and install pytest (from requirements-dev.txt)
 make test        # unit tests: PYTHONPATH=backend pytest backend/tv_core/tests backend/tv_driver_lg/tests .github/scripts/tests -q
 make build       # frontend only -> dist/index.js (rollup)
-make deploy      # build + rsync into "~/homebrew/plugins/Smart TV Controls" on this machine
+make deploy      # build + rsync into ~/homebrew/plugins/Smart-TV-Controls on this machine
 make release     # build the distributable smart-tv-controls.zip
 pnpm run watch   # rebuild the frontend on change
 

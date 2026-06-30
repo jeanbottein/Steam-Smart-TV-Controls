@@ -66,7 +66,8 @@ to read display info.
 
    (This is the release **zip** URL, not the repository URL.)
 3. **Restart Decky** (or reboot) — plugins installed from a URL only appear after
-   a restart. It shows up as "Smart TV Controls".
+   a restart. It shows up as "Smart-TV-Controls" in the plugin list (the Quick
+   Access panel titles it "Smart TV Controls").
 
 ### Manual
 
