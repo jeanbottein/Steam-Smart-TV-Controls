@@ -61,7 +61,7 @@ export function InputSwitcher({ tv, inputs }: { tv: Tv; inputs: Input[] }) {
       <PanelSectionRow>
         <ButtonItem
           layout="below"
-          bottomSeparator="standard"
+          bottomSeparator="none"
           disabled={busy || !selected}
           onClick={send}
         >

@@ -1,4 +1,4 @@
-import { ButtonItem, PanelSection, PanelSectionRow } from "@decky/ui";
+import { ButtonItem, PanelSectionRow } from "@decky/ui";
 import { useState } from "react";
 import { readLogs } from "../api";
 
@@ -14,9 +14,9 @@ export function Logs() {
   };
 
   return (
-    <PanelSection title="Logs">
+    <>
       <PanelSectionRow>
-        <ButtonItem layout="below" onClick={load}>
+        <ButtonItem layout="below" bottomSeparator="none" onClick={load}>
           {text === undefined ? "View logs" : "Refresh logs"}
         </ButtonItem>
       </PanelSectionRow>
@@ -37,6 +37,6 @@ export function Logs() {
           </pre>
         </PanelSectionRow>
       )}
-    </PanelSection>
+    </>
   );
 }

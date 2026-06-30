@@ -9,6 +9,7 @@ export interface Tv {
   host: string;
   name: string;
   brand: string;
+  inputs?: Input[];
 }
 
 export interface Rule {
@@ -47,6 +48,7 @@ export const switchInput = callable<[host: string, inputId: string], void>("swit
 export const setRule =
   callable<[displayId: string, host: string, inputId: string, enabled: boolean], void>("set_rule");
 export const removeRule = callable<[displayId: string], void>("remove_rule");
+export const reapplyRules = callable<[], void>("reapply_rules");
 export const isReachable = callable<[host: string], boolean>("is_reachable");
 export const readLogs = callable<[], string>("read_logs");
 

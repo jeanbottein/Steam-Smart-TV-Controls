@@ -141,6 +141,39 @@ class Plugin:
     async def switch_input(self, host: str, input_id: str):
         await self._set_input(self.store.find_tv(host), input_id)
 
+    async def reapply_rules(self):
+        """Re-assert the input rule for every currently-connected display — the equivalent
+        of a console's "One Touch Play" when you press the controller's home button.
+
+        Unlike the watch loop this ignores the appearance gate and the post-switch cooldown,
+        since the press is explicit intent. It still honors the gamescope settle delay for a
+        display we haven't seen yet (a dock-time reconfig may be in flight, and switching
+        mid-reconfig can crash the Steam client) and never pulls an already-queued attempt
+        earlier than the watch loop scheduled it; a steady, already-seen display switches
+        right away. The driver no-ops when the TV is already on the target input, so pressing
+        repeatedly is cheap. Reuses the drain/attempt path, so retries, wake, and the
+        one-attempt-per-display guard all still apply."""
+        now = time.monotonic()
+        present = {display["id"] for display in connected_displays()}
+        # A display we haven't seen yet may still be mid dock-reconfig, so give it the settle
+        # delay. Fold present into `seen` so _drain — which only acts on seen displays — fires.
+        appeared = present - self.seen
+        self.seen |= present
+        queued = []
+        for rule in self.store.rules:
+            did = rule["display_id"]
+            if not rule.get("enabled") or did not in present:
+                continue
+            after = now + SETTLE_SECONDS if did in appeared else now
+            existing = self.pending.get(did)
+            if existing is not None:
+                after = max(after, existing["after"])
+            self.pending[did] = {"after": after, "deadline": now + APPLY_BUDGET_SECONDS}
+            queued.append(did)
+        if queued:
+            decky.logger.info(f"reapply requested for {queued}")
+            self._drain(now)
+
     async def set_rule(self, display_id: str, host: str, input_id: str, enabled: bool):
         self.store.set_rule(display_id, host, input_id, enabled)
 
