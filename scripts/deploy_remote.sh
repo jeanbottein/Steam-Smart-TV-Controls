@@ -39,11 +39,19 @@ rm -f "$STAGING/dist/"*.map
 find "$STAGING/backend" -type d -name tests -prune -exec rm -rf {} +
 find "$STAGING" -type d -name __pycache__ -prune -exec rm -rf {} +
 
-# Single SSH connection: --rsync-path creates the dest dir, so the password is typed once.
+# Multiplex one SSH connection so the password is typed once: the first ssh
+# opens a master connection (and creates the dest dir, properly quoted so the
+# spaces in the plugin name survive), then rsync reuses it without re-prompting.
+# Note: --rsync-path can't carry the mkdir here — rsync word-splits that string,
+# which breaks the quoting around a path containing spaces.
 echo "Syncing to ${DECK_USER}@${DECK_HOST}:${DEST} (enter the Deck password when prompted)..."
+SSH_CTRL="$(mktemp -u)"
+trap 'ssh -o ControlPath="$SSH_CTRL" -O exit "${DECK_USER}@${DECK_HOST}" 2>/dev/null || true' EXIT
+ssh -o ControlMaster=auto -o ControlPath="$SSH_CTRL" -o ControlPersist=60 \
+  -o StrictHostKeyChecking=accept-new \
+  "${DECK_USER}@${DECK_HOST}" "mkdir -p '${DEST}'"
 rsync -rv --delete \
-  --rsync-path="mkdir -p '${DEST}' && rsync" \
-  -e "ssh -o StrictHostKeyChecking=accept-new" \
-  "$STAGING/" "${DECK_USER}@${DECK_HOST}:${DEST}/"
+  -e "ssh -o ControlPath='${SSH_CTRL}'" \
+  "$STAGING/" "${DECK_USER}@${DECK_HOST}:${DEST// /\\ }/"
 
 echo "Done. Restart Decky (or reload the plugin) on the Deck to pick up changes."
